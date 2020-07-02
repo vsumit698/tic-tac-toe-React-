@@ -49,12 +49,14 @@ class Game extends React.Component {
       history: [{
         boardStatus: Array(9).fill(null),
       }],
-      currPlayer: 'X'
+      nextPlayer: 'X',
+      moveNum : 0
     };
   }
 
   changeBoardStatus(squareId){
-    var currBoardState = this.state.history[this.state.history.length-1];
+    var history = this.state.history;
+    var currBoardState = history[this.state.moveNum];
 
     const status = this.calculateWinner(currBoardState.boardStatus);
   
@@ -62,10 +64,10 @@ class Game extends React.Component {
     // changing board state
     // const prevState = this.state.boardStatus;
     const newBoardStatus = currBoardState.boardStatus.slice();
-    newBoardStatus[squareId] = this.state.currPlayer==='X' ? 'X' : 'O';
-    this.state.history.push({boardStatus : newBoardStatus});
+    newBoardStatus[squareId] = this.state.nextPlayer==='X' ? 'X' : 'O';
+    history.splice(this.state.moveNum+1,(history.length-1)-this.state.moveNum,{boardStatus : newBoardStatus});
     // re rendering of game component will happen
-    this.setState({history : this.state.history , currPlayer : this.state.currPlayer==='X' ? 'O' : 'X'});
+    this.setState({history : history , nextPlayer : this.state.nextPlayer==='X' ? 'O' : 'X',moveNum : this.state.moveNum+1});
 
   }
 
@@ -77,14 +79,23 @@ class Game extends React.Component {
       if (squares[a] && (squares[a] === squares[b] && squares[a] === squares[c])) {
         return squares[a];
       }
-    }
+    }  
     return null;
 
   }
-
+  jumpTo(moveNum){
+    this.setState({history : this.state.history,nextPlayer : (moveNum%2 === 0)?'X':'O',moveNum : moveNum});
+  }
   render() {
-    var currBoardState = this.state.history[this.state.history.length-1];
-    
+    var currBoardState = this.state.history[this.state.moveNum];
+    var allMoves = this.state.history.map((value,id)=>{
+      var description = id ?  'Go to Move '+id: 'Go to Game Start';
+      return(
+        <li key={id}>
+          <button onClick={()=>{this.jumpTo(id)}}>{description}</button>
+        </li>
+      );
+    });
     const status = this.calculateWinner(currBoardState.boardStatus);
     
     return (
@@ -96,8 +107,8 @@ class Game extends React.Component {
 
         <div className="game-info">
 
-          <div>{(status)? status+' is Winner' : 'Next player: '+this.state.currPlayer}</div>
-          <ol>{/* TODO */}</ol>
+          <div>{(status)? status+' is Winner' : 'Next player: '+this.state.nextPlayer}</div>
+          <ol>{allMoves}</ol>
 
         </div>
       </div>
